@@ -2,6 +2,8 @@
 const path = require('path')
 const utils = require('./utils')
 const config = require('../config')
+const webpack = require("webpack")
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const vueLoaderConfig = require('./vue-loader.conf')
 
 function resolve (dir) {
@@ -32,10 +34,11 @@ module.exports = {
       : config.dev.assetsPublicPath
   },
   resolve: {
-    extensions: ['.js', '.vue', '.json'],
+    extensions: ['.js', '.vue', '.json', '.less'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
+      'jquery': 'jquery',
     }
   },
   module: {
@@ -77,6 +80,15 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+      new webpack.ProvidePlugin({
+          $: "jquery",
+          jQuery: "jquery"
+      }),
+      new ExtractTextPlugin({
+        filename : 'css/VUECharts.css'
+      })
+  ],
   node: {
     // prevent webpack from injecting useless setImmediate polyfill because Vue
     // source contains it (although only uses it if it's native).
