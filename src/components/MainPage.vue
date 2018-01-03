@@ -1,3 +1,6 @@
+/*
+  author: onwebbe (tai)
+*/
 <template>
   <div class="mainPage">
     test
@@ -9,20 +12,19 @@
 
 <script>
 import VUEChart from '@/chartjs/VUEChart.js';
-import ChartDataSheet from '@/components/DataSheet'
+
 export default {
   name: 'ChartMainPage',
   data () {
     return {
-      
     }
   },
   created: function () {
-    //let chart = new VUEChart('.chart', 1000,500);
-    
   },
-  mounted: function() {
-    let chart = new VUEChart('.chart', 1000,500);
+  mounted: function () {
+    let chart = new VUEChart('.chart', 1000, 500);
+    chart.addGroup('null', {color: 'green'});
+    chart.addPoint(0, 10, 'null');
   }
 }
 </script>

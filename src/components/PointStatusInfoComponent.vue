@@ -2,25 +2,21 @@
   author: onwebbe (tai)
 */
 <template>
-  <div class="dataSheet">
+  <div class="comp1">
     <div>
-      <point-status></point-status>
+      comp1
     </div>
     <div>
-      <block-issues></block-issues>
+      comp1
     </div>
     <div>
-      <followups></followups>
+      comp1
     </div>
   </div>
 </template>
 
 <script>
-import PointStatus from '@/components/PointStatusInfoComponent';
-import BlockIssues from '@/components/BlockIssuesInfoComponent';
-import Followups from '@/components/FollowupInfoComponent';
 export default {
-  name: 'DataSheet',
   data () {
     return {
     }
@@ -28,11 +24,6 @@ export default {
   created: function () {
   },
   mounted: function () {
-  },
-  components: {
-    'point-status': PointStatus,
-    'block-issues': BlockIssues,
-    'followups': Followups
   }
 }
 </script>
