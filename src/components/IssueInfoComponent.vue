@@ -3,11 +3,11 @@
     <el-header class="pointStatus" style="height: 40px;">
       <el-row type="flex" class="row-bg" justify="space-around">
         <el-col :span="12">
-          <span class="pointInfoTitle">Block issues</span>
+          <span class="pointInfoTitle">{{title}}</span>
         </el-col>
         <el-col :span="6">
           <i class="el-icon-circle-plus-outline addIssueIcon"  v-show="isShowAction" @click="openDialog"></i>
-          <add-block-dialog :dialogDisplay="dialogDisplay" category="block"></add-block-dialog>
+          <add-block-dialog :defaultValues="defaultAddIssueValues" :dialogDisplay="dialogDisplay" :category="type"></add-block-dialog>
         </el-col>
       </el-row>
     </el-header>
@@ -58,18 +58,24 @@
         </el-table-column>
         <el-table-column prop="status">
           <template slot-scope="scope">
-            <el-popover popper-class="popoverMinWidth" ref="popoverStatus" trigger="click" :disabled = "!isShowAction" v-model="popoverdisplay">
+            <el-popover popper-class="popoverMinWidth" ref="popoverStatus" :disabled = "!isShowAction">
               <el-row>
                 <el-button type="text" v-show="scope.row.status !== 'Resolved'" @click="updateIssueStatus(scope.row, 'Resolved')">Resolved</el-button>
               </el-row>
-              <el-row>
-                <el-button type="text" v-show="scope.row.status !== 'Open'" @click="updateIssueStatus(scope.row, 'Open')">Blocking</el-button>
+              <el-row v-if="type === 'block'">
+                <el-button type="text" v-show="scope.row.status !== 'Open'" @click="updateIssueStatus(scope.row, 'Open')">Block</el-button>
               </el-row>
-              <el-row>
-                <el-button type="text" @click="updateIssueCategory(scope.row, 'followup')">Followup</el-button>
+              <el-row v-if="type === 'block' && scope.row.status === 'Open'">
+                <el-button type="text" @click="updateIssueCategory(scope.row, 'followup')">Move to Followup</el-button>
+              </el-row>
+              <el-row v-if="type === 'followup'">
+                <el-button type="text" v-show="scope.row.status !== 'Open'" @click="updateIssueStatus(scope.row, 'Open')">Followup</el-button>
+              </el-row>
+              <el-row v-if="type === 'followup' && scope.row.status === 'Open'">
+                <el-button type="text" @click="updateIssueCategory(scope.row, 'block')">Move to Block</el-button>
               </el-row>
             </el-popover>
-            <span v-popover:popoverStatus>{{scope.row.status}}</span>
+            <span v-popover:popoverStatus :id="scope.row._id">{{scope.row.status}}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -80,6 +86,12 @@
 <script>
 import AddDialogContent from '@/components/AddIssueDialog';
 export default {
+  props: {
+    'type': {
+      type: String,
+      default: 'block'
+    }
+  },
   components: { 'add-block-dialog': AddDialogContent },
   data () {
     return {
@@ -90,17 +102,23 @@ export default {
       previousblockersnum: 0,
       dialogDisplay: false,
       isShowAll: true,
-      popoverdisplay: false,
+      title: '',
+      defaultAddIssueValues: {},
+      group: '',
 
-      summary: null,
-      sprintid: null
+      allGroups: null,
+      summary: null
     };
   },
   methods: {
     tableRowClassName ({row, rowIndex}) {
       if (this.issues) {
         if (this.issues[rowIndex].status === 'Open') {
-          return 'blockedIssueTrColor';
+          if (this.type === 'block') {
+            return 'blockedIssueTrColor';
+          } else {
+            return 'followupIssueTrColor';
+          }
         } else if (this.issues[rowIndex].status === 'Resolved') {
           return 'resolvedIssueTrColor';
         }
@@ -125,8 +143,9 @@ export default {
         changeinsprintday: changeinsprintday
       };
       var self = this;
+      $('#' + row._id).click();
       this.axios.post('/api/v1/updateIssue', updateInfo).then(function (response) {
-        self.popoverdisplay = false;
+        // self.$refs['popoverStatus'].doClose();
         if (response.data.status === 'success') {
           self.$root.eventHub.$emit('sprintDataChanged', sprint);
           // row.status = status;
@@ -137,7 +156,7 @@ export default {
           });
         }
       }).catch(function (error) {
-        self.popoverdisplay = false;
+        self.$refs['popoverStatus'].doClose();
         console.log(error);
         self.$message({
           message: 'Server Error',
@@ -163,8 +182,9 @@ export default {
         changeinsprintday: changeinsprintday
       };
       var self = this;
+      $('#' + row._id).click();
       this.axios.post('/api/v1/updateIssue', updateInfo).then(function (response) {
-        self.popoverdisplay = false;
+        // self.$refs['popoverStatus'].doClose();
         if (response.data.status === 'success') {
           self.$root.eventHub.$emit('sprintDataChanged', sprint);
           // row.status = status;
@@ -175,7 +195,7 @@ export default {
           });
         }
       }).catch(function (error) {
-        self.popoverdisplay = false;
+        self.$refs['popoverStatus'].doClose();
         console.log(error);
         self.$message({
           message: 'Server Error',
@@ -189,6 +209,20 @@ export default {
     openDialog: function () {
       this.dialogDisplay = true;
       var self = this;
+      if (this.group !== '') {
+        var groups = this.allGroups;
+        var groupObj = null;
+        for (var i = 0; i < groups.length; i++) {
+          var groupItem = groups[i];
+          if (this.group === groupItem.groupname) {
+            groupObj = groupItem;
+            break;
+          }
+        }
+        this.defaultAddIssueValues['issueGroup'] = {'groupname': groupObj.groupname, '_id': groupObj._id};
+      } else {
+        this.defaultAddIssueValues['issueGroup'] = {};
+      }
       setTimeout(function () {
         self.dialogDisplay = null;
       });
@@ -197,14 +231,16 @@ export default {
       this.sprintid = sprintid;
       this.summary = summary;
       let calGroups = [clickedGroup];
+      this.group = clickedGroup;
+      this.allGroups = allGroups;
       if (clickedGroup === '') {
         calGroups = [];
         for (var i = 0; i < allGroups.length; i++) {
           calGroups.push(allGroups[i].groupname);
         }
       }
-      var blockers = [];
-      var prevBlocker = [];
+      var issues = [];
+      var prevIssue = [];
       for (let i = 0; i < calGroups.length; i++) {
         var usingGroup = calGroups[i];
         var dayLength = this.summary.summary.length - 1;
@@ -213,11 +249,16 @@ export default {
         } else {
           this.isShowAction = false;
         }
-        blockers = blockers.concat(todayData.groups[usingGroup].blocker || []);
-        prevBlocker = prevBlocker.concat(previousData.groups[usingGroup].blocker || []);
+        if (this.type === 'block') {
+          issues = issues.concat(todayData.groups[usingGroup].blocker || []);
+          prevIssue = prevIssue.concat(previousData.groups[usingGroup].blocker || []);
+        } else {
+          issues = issues.concat(todayData.groups[usingGroup].followup || []);
+          prevIssue = prevIssue.concat(previousData.groups[usingGroup].followup || []);
+        }
       }
-      this.issues = blockers;
-      this.previousIssues = prevBlocker;
+      this.issues = issues;
+      this.previousIssues = prevIssue;
     }
   },
   computed: {
@@ -309,6 +350,12 @@ export default {
       // console.log(this.$route);
       this.$root.eventHub.$on('getDaySummary', this.getDayBlockSummary);
     }
+
+    if (this.type === 'block') {
+      this.title = 'Block issues';
+    } else {
+      this.title = 'Followup issues';
+    }
   },
   mounted: function () {}
 };
@@ -366,5 +413,8 @@ header.pointStatus {
 }
 .pointChangedItem {
   border: none;
+}
+.followupIssueTrColor{
+  color: @warningColor;
 }
 </style>

@@ -22,3 +22,45 @@
 .chartBarItem.disabled .textspan {
   color: grey !important;
 }
+
+.chartPoint.pointHighlited {
+  box-shadow: 0px 0px 6px 3px;
+}
+.chartLines.lineHighlited {
+  box-shadow: 0px 0px 3px 1px;
+}
+.chartArea .popoverContainer {
+  box-shadow: 3px 3px 12px 1px rgba(150,150,150, 0.5);
+  padding: 10px;
+  border: 1px solid rgba(150,150,150, 0.1);
+  border-radius: 5px;
+  z-index: 110;
+  background-color: rgba(255,255,255,0.8);
+}
+.chartArea .popoverContainer .calloutpoint {
+  bottom: -6px;
+  height: 0px;
+  border-width: 6px;
+  width: 0px;
+  position: absolute;
+  border-bottom-width: 0px;
+  border-style: solid;
+  border-right-color: transparent;
+  border-top-color: rgba(150,150,150, 0.1);
+  border-left-color: transparent;
+  left: 50%;
+}
+.chartArea .popoverContainer .calloutpoint:after {
+  content: '';
+  height: 0px;
+  border-width: 6px;
+  width: 0px;
+  position: absolute;
+  border-bottom-width: 0px;
+  border-style: solid;
+  border-right-color: transparent;
+  border-top-color: rgba(255,255,255,0.8);
+  border-left-color: transparent;
+  top: -6px;
+  left: -6px;
+}

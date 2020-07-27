@@ -12,7 +12,7 @@ EventProvider.prototype.addEventListener = function (eventname, fun) {
   }
   var eventid = eventname + '_' + new Date().getTime() + '_' + Math.floor(Math.random() * 1000000000000);
   this.eventbus[eventname][eventid] = fun;
-  console.log('added event:' + eventid);
+  // console.log('added event:' + eventid);
   return eventid;
 };
 EventProvider.prototype.fireEvent = function (eventname, evtdata) {
@@ -27,7 +27,7 @@ EventProvider.prototype.fireEvent = function (eventname, evtdata) {
       eventname: eventname,
       eventid: eventid,
       data: evtdata
-    }
+    };
     eventFun(eventObj);
   }
 };
